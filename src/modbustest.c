@@ -5,7 +5,7 @@
 #include <libbacnet/tsm.h>
 #include <libbacnet/ai.h>
 #include "bacnet_namespace.h"
-#define BACNET_INSTANCE_NO	80
+#define BACNET_INSTANCE_NO	90
 #define BACNET_PORT	0xBAC1
 #define BACNET_INTERFACE	"lo"
 #define BACNET_DATALINK_TYPE	"bvlc"
