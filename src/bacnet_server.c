@@ -173,31 +173,30 @@ static void *second_tick(void *arg) {
 
 static void *modbus_contact(void *arg) {
     while (1) {
-	modbus_t *xc
-	uint16_t tabl[64];
-        int rc;
-        int i;
+	modbus_t *ctx;
+uint16_t tab_reg[64];
+int rc;
+int i;
 
-	xc= modbus_new_tcp("140.159.153.159", 502);
-	if (modbus_connect(xc) == -1) {
-               fprintf(stderr, "Connection failed: %s\n", modbus_strerror(errno));
-               modbus_free(xc);
-               return -1;
-           }
+ctx = modbus_new_tcp("140.159.153.159", 502);
+if (modbus_connect(ctx) == -1) {
+    fprintf(stderr, "Connection failed: %s\n", modbus_strerror(errno));
+    modbus_free(ctx);
+    return -1;
+}
 
-	rc = modbus_read_registers(ctx, 0, 10, tabl);
-           if (rc == -1) {
-               fprintf(stderr, "%s\n", modbus_strerror(errno));
-               return -1;
-           }
+rc = modbus_read_registers(ctx, 0, 10, tab_reg);
+if (rc == -1) {
+    fprintf(stderr, "%s\n", modbus_strerror(errno));
+    return -1;
+}
 
-           for (i=0; i < rc; i++) {
-               printf("reg[%d]=%d (0x%X)\n", i, tabl[i], tabl[i]);
-           }
+for (i=0; i < rc; i++) {
+    printf("reg[%d]=%d (0x%X)\n", i, tab_reg[i], tab_reg[i]);
+}
 
-	
-	modbus_close(xc);
-        modbus_free(xc);
+modbus_close(ctx);
+modbus_free(ctx);
 
 	bacnet_tsm_timer_milliseconds(100);
 	/* 100 millisecond timer */
