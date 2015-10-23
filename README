@@ -1,5 +1,7 @@
 Victoria University EES4100 Test Suite
 
+First and foremost this project has been developed as an assessment relevant to my undergraduate degree in Electrical Engineering at Victoria University. This code is most likely incomplete or inefficient, use at your own peril.
+
 This repository builds three applications:
 
 bacnet_client:
@@ -25,8 +27,15 @@ modbus_server:
 	
 	BACnet Side			Modbus Side
 
-	Device 12 AI Instance 0		Register 12
-	Device 12 AI Instance 1		Register 13
-	Device 12 AI Instance 2		Register 14
-	Device 120 AI Instance 0	Register 120 ...
+	Device 90 AI Instance 0		Register 90
+	Device 90 AI Instance 1		Register 91
+	Device 90 AI Instance 2		Register 92
+	Device 90 AI Instance 3		Register 93
 
+BUILDING THE SYSTEM
+
+too build the system follow these easy steps:
+Step 1: git clone https://github.com/keithy27/EES4100_Testbench.git
+./bootstrap.sh
+./configure
+make

@@ -1,0 +1,20 @@
+October 22 3:30PM
+Completed portfolio
+
+October 22 4:00PM
+Begun Project Part 1
+
+October 23 3:30AM
+Call it a night
+
+October 23 1:30PM
+Initial commit to project folder on github (github.com/keithy27/EES4100_Testbench)
+
+October 23 3:00PM
+modbus test "working" for project part 1
+
+October 23 3:20PM
+modbus test actually working in modbustest.c
+
+October 23 3:40PM
+Incorporated project part 1 into bacnet_server.c multiple warnings, some errors.
