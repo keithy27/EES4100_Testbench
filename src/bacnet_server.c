@@ -59,7 +59,7 @@ static void add_to_list(wobj **lhead, char *word) {
 		wobj *lobj, *tobj;
 		char *tstring=strdup(word);
 		tobj = malloc(sizeof(wobj)); /* new temp object with memory allocated to the size of w obj */
-		tobj->word = t_string; 
+		tobj->word = tstring; 
 		tobj->next = NULL;
 		pthread_mutex_lock(&llock);
 		if (*lhead == NULL) { /* start if */
