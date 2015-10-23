@@ -2,6 +2,8 @@ Victoria University EES4100 Test Suite
 
 First and foremost this project has been developed as an assessment relevant to my undergraduate degree in Electrical Engineering at Victoria University. This code is most likely incomplete or inefficient, use at your own peril.
 
+The system was based on a testbench setup by my tutor Kim Taylor, this is located at https://github.com/kmtaylor/EES4100_Testbench
+
 This repository builds three applications:
 
 bacnet_client:
@@ -13,11 +15,10 @@ bacnet_client:
     bacnet_client acts as a BBMD and expects register_with_bbmd requests.
 
 bacnet_server:
-    An incomplete implementation of a Modbus to BACnet bridge. (The modbus code
-    is missing completely). Use this as a basis for your project.
+    An incomplete implementation of a Modbus to BACnet bridge. (The modbus code is half complete). Use this as a basis for your project.
 
     It is currently configured to send test_data (matching the data for device
-    12 in RANDOM_DATA_POOL) to demonstrate the matching requirements for
+    90 in RANDOM_DATA_POOL) to demonstrate the matching requirements for
     bacnet_client.
 
 modbus_server:
@@ -26,6 +27,11 @@ modbus_server:
     register number mapping is as follows:
 	
 	BACnet Side			Modbus Side
+
+	Device 13 AI Instance 0		Register 13
+	Device 13 AI Instance 1		Register 14
+	Device 13 AI Instance 2		Register 15
+	Device 130 AI Instance 0	Register 130
 
 	Device 90 AI Instance 0		Register 90
 	Device 90 AI Instance 1		Register 91
@@ -36,6 +42,10 @@ BUILDING THE SYSTEM
 
 too build the system follow these easy steps:
 Step 1: git clone https://github.com/keithy27/EES4100_Testbench.git
-./bootstrap.sh
-./configure
-make
+Step 2: ./bootstrap.sh
+Step 3: ./configure
+Step 4: make
+
+If this fails, refer to autotools manual located at: https://www.gnu.org/software/automake/manual/html_node/Autotools-Introduction.html
+
+or tutorial at: https://www.lrde.epita.fr/~adl/autotools.html
