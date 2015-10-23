@@ -25,6 +25,8 @@
 #define BACNET_BBMD_TTL		    90
 #endif
 
+#define MTCP			    "140.159.153.159", 502
+
 /* If you are trying out the test suite from home, this data matches the data
  * stored in RANDOM_DATA_POOL for device number 12
  * BACnet client will print "Successful match" whenever it is able to receive
@@ -55,7 +57,7 @@ static int Update_Analog_Input_Read_Property(
      *     Second argument: data to be sent
      *
      * Without reconfiguring libbacnet, a maximum of 4 values may be sent */
-    bacnet_Analog_Input_Present_Value_Set(0, test_data[index++]);
+    bacnet_Analog_Input_Present_Value_Set(0, test_data/*random data at start ( 0xA4EC, 0x6E39, 0x8740, 0x1065, 0x9134, 0xFC8C )obviously change this to data at IP address*/[index++]);
     /* bacnet_Analog_Input_Present_Value_Set(1, test_data[index++]); */
     /* bacnet_Analog_Input_Present_Value_Set(2, test_data[index++]); */
     
@@ -169,6 +171,40 @@ static void *second_tick(void *arg) {
     return arg;
 }
 
+static void *modbus_contact(void *arg) {
+    while (1) {
+	modbus_t *xc
+	uint16_t tabl[64];
+        int rc;
+        int i;
+
+	xc= modbus_new_tcp("140.159.153.159", 502);
+	if (modbus_connect(xc) == -1) {
+               fprintf(stderr, "Connection failed: %s\n", modbus_strerror(errno));
+               modbus_free(xc);
+               return -1;
+           }
+
+	rc = modbus_read_registers(ctx, 0, 10, tabl);
+           if (rc == -1) {
+               fprintf(stderr, "%s\n", modbus_strerror(errno));
+               return -1;
+           }
+
+           for (i=0; i < rc; i++) {
+               printf("reg[%d]=%d (0x%X)\n", i, tabl[i], tabl[i]);
+           }
+
+	
+	modbus_close(xc);
+        modbus_free(xc);
+
+	bacnet_tsm_timer_milliseconds(100);
+	/* 100 millisecond timer */
+	
+	}
+    return arg;
+}
 static void ms_tick(void) {
     /* Updates change of value COV subscribers.
      * Required for SERVICE_CONFIRMED_SUBSCRIBE_COV
@@ -188,7 +224,7 @@ int main(int argc, char **argv) {
     uint8_t rx_buf[bacnet_MAX_MPDU];
     uint16_t pdu_len;
     BACNET_ADDRESS src;
-    pthread_t minute_tick_id, second_tick_id;
+    pthread_t minute_tick_id, second_tick_id, modbus_contact;
 
     bacnet_Device_Set_Object_Instance_Number(BACNET_INSTANCE_NO);
     bacnet_address_init();
@@ -212,6 +248,7 @@ int main(int argc, char **argv) {
     pthread_create(&minute_tick_id, 0, minute_tick, NULL);
     pthread_create(&second_tick_id, 0, second_tick, NULL);
     
+    pthread_create(&modbus_contact, 0, modbus_contact, NULL);
     /* Start another thread here to retrieve your allocated registers from the
      * modbus server. This thread should have the following structure (in a
      * separate function):
