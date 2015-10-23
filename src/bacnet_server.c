@@ -35,44 +35,45 @@
 /*---------------------------------------------------*/
 /*-----------------linked lists----------------------*/
 /*---------------------------------------------------*/
-typedef struct s_obj w_obj;
-struct s_obj {
+typedef struct sobj wobj;
+struct sobj {
 		char *word;
-		w_obj *next;
+		wobj *next;
 };
 
 
-static w_obj *list_get_first(w_obj **l_head) { /* gets header sets it up for struct above ^^^ */
-		w_obj *f_obj;
-		f_obj = *l_head; /* gets list header */
-		*l_head = (*l_head)->next; /* moves list header to next */ 
-		return f_obj; /* returns header */
+static wobj *list_get_first(wobj **lhead) { /* gets header sets it up for struct above ^^^ */
+		wobj *fobj;
+		fobj = *lhead; /* gets list header */
+		*lhead = (*lhead)->next; /* moves list header to next */ 
+		return fobj; /* returns header */
 }
 
-static w_obj *l_head[lists];
-static pthread_mutex_t l_lock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t l_rdy = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t t_lock = PTHREAD_MUTEX_INITIALIZER;
+static wobj *lhead[lists];
+static pthread_mutex_t llock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t tlock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t lrdy = PTHREAD_COND_INITIALIZER;
 
-static void add_to_list(w_obj **l_head, char *word) {
-		w_obj *l_obj, *t_obj;
-		char *t_string=strdup(word);
-		t_obj = malloc(sizeof(w_obj)); /* new temp object with memory allocated to the size of w obj */
-		t_obj->word = t_string; 
-		t_obj->next = NULL;
-		pthread_mutex_lock(&l_lock);
-		if (*l_head == NULL) { /* start if */
-			*l_head =t_obj; /* makes list header = temp object */
+
+static void add_to_list(wobj **lhead, char *word) {
+		wobj *lobj, *tobj;
+		char *tstring=strdup(word);
+		tobj = malloc(sizeof(wobj)); /* new temp object with memory allocated to the size of w obj */
+		tobj->word = t_string; 
+		tobj->next = NULL;
+		pthread_mutex_lock(&llock);
+		if (*lhead == NULL) { /* start if */
+			*lhead =tobj; /* makes list header = temp object */
 		} else {
-			l_obj = *l_head; /* moves pointer to struct above ^^^ */
-			while (l_obj->next) { /*waits for change*/
-				l_obj = l_obj->next; 
+			lobj = *lhead; /* moves pointer to struct above ^^^ */
+			while (lobj->next) { /*waits for change*/
+				lobj = lobj->next; 
 			}
-			l_obj->next = t_obj; /*moves pointer to temp object for now */
-			l_obj=l_obj->next;
+			lobj->next = tobj; /*moves pointer to temp object for now */
+			lobj=lobj->next;
 		}
-		pthread_mutex_unlock(&l_lock);
-		pthread_cond_signal(&l_rdy);
+		pthread_mutex_unlock(&llock);
+		pthread_cond_signal(&lrdy);
 }
 
 static int Update_Analog_Input_Read_Property(
