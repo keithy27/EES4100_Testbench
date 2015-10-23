@@ -1,6 +1,10 @@
 Victoria University EES4100 Test Suite
 
-First and foremost this project has been developed as an assessment relevant to my undergraduate degree in Electrical Engineering at Victoria University. This code is most likely incomplete or inefficient, use at your own peril.
+First and foremost this project has been developed as an assessment relevant to my undergraduate degree in Electrical Engineering at Victoria University. This code is most likely incomplete or inefficient, use at your own peril. 
+
+System works to a degree got bouncing back and fourth but no integers?
+
+To use program run the bacnet_server and with a little luck all will connect a ok.
 
 The system was based on a testbench setup by my tutor Kim Taylor, this is located at https://github.com/kmtaylor/EES4100_Testbench
 
