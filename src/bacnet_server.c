@@ -76,6 +76,7 @@ static void add_to_list(wobj **lhead, char *word) {
 		pthread_cond_signal(&lrdy);
 }
 
+
 static int Update_Analog_Input_Read_Property(
 		BACNET_READ_PROPERTY_DATA *rpdata) {
 
@@ -210,45 +211,45 @@ static void *second_tick(void *arg) {
 }
 
 static void *modbus_contact(void *arg){
-int i; //variable
-int mr; //variable to track number of items received from modbus
-uint16_t tab_reg[128]; // storage for data from modbus request
-char sending[64]; //storage value for sending data
-modbus_t *ctx; //reference to modbus connection, ctx is variable for addr as seen below 
-confailed:;
-ctx = modbus_new_tcp("140.159.153.159", 502);
-//connects
+	int i; /*variable*/
+	int mr; /*variable to track number of items received from modbus*/
+	uint16_t tabr[128]; /* storage for data from modbus request*/
+	char sending[64]; /*storage value for sending data*/
+	modbus_t *ctx; /*reference to modbus connection, ctx is variable for addr as seen below */
+	confailed:;
+	ctx = modbus_new_tcp("140.159.153.159", 502); /*connects to server at uni */
 
-if (ctx == NULL) {
-fprintf(stderr, "Unable to allocate libmodbus context\n");
-sleep(1);
-goto confailed;
-}
-if (modbus_connect(ctx) == -1) {
-printf("con failed");
-fprintf(stderr, "Connection failed: %s\n", modbus_strerror(errno));
-modbus_free(ctx);
-sleep(1);
-goto confailed;
-}
+
+	if (ctx == NULL) {
+		fprintf(stderr, "Cannot allocate libmodbus context read manual\n");
+		usleep(100000);/* waits .1 second to not DDOS */
+		goto confailed; /* tries sequence again */
+	}
+	if (modbus_connect(ctx) == -1) {
+		printf("Connection failure read manual");
+		fprintf(stderr, "Connection failed: %s\n", modbus_strerror(errno));
+		modbus_free(ctx);
+		usleep(100000); /* waits .1 second to not DDOS */
+		goto confailed; /* tries sequence again */
+	}
 while (1) {
-mr = modbus_read_registers(ctx, 90,4, tab_reg); //reads the data from modbus server
-/* if it failed close connection and then reconnect registers 90-93 */
-if (mr == -1) {
-fprintf(stderr, "%s\n", modbus_strerror(errno));
-modbus_close(ctx);
-modbus_free(ctx);
-usleep(100000); //wait for 100ms before trying again
-goto confailed;
-}
-/*add all items received in order to the head of the linked list*/
-for (i=0; i < mr; i++) {
-sprintf(sending, "%x", tab_reg[i]);
-add_to_list(&list_heads[i], sending);
-}
-usleep(100000); //wait for 100ms before next read
-}
-return arg; //removes warning
+	mr = modbus_read_registers(ctx, 90,4, tabr); /*reads the data from modbus server */
+
+	if (mr == -1) {
+		fprintf(stderr, "%s\n", modbus_strerror(errno));
+		modbus_close(ctx);
+		modbus_free(ctx);
+		usleep(100000); /* waits .1 second to not DDOS */
+		goto confailed; /* tries sequence again */
+	}
+
+	for (i=0; i < mr; i++) {
+		sprintf(sending, "%x", tabr[i]);
+		add_to_list(&lhead[i], sending);
+	}
+	usleep(100000); /* waits .1 second to not DDOS before next read */
+	}
+	return arg; /*removes warning*/
 }
 static void ms_tick(void) {
     /* Updates change of value COV subscribers.
