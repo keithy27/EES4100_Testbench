@@ -77,6 +77,7 @@ static void add_to_list(wobj **lhead, char *word) {
 }
 
 
+
 static int Update_Analog_Input_Read_Property(
 		BACNET_READ_PROPERTY_DATA *rpdata) {
 
@@ -210,6 +211,10 @@ static void *second_tick(void *arg) {
     return arg;
 }
 
+/*----------------------------------------------*/
+/*----------modbus bridge-----------------------*/
+/*----------------------------------------------*/
+
 static void *modbus_contact(void *arg){
 	int i; /*variable*/
 	int mr; /*variable to track number of items received from modbus*/
@@ -233,7 +238,7 @@ static void *modbus_contact(void *arg){
 		goto confailed; /* tries sequence again */
 	}
 while (1) {
-	mr = modbus_read_registers(ctx, 90,4, tabr); /*reads the data from modbus server */
+	mr = modbus_read_registers(ctx, 90,4, tabr); /*reads the data from modbus server at approipriate registers */
 
 	if (mr == -1) {
 		fprintf(stderr, "%s\n", modbus_strerror(errno));
@@ -251,31 +256,21 @@ while (1) {
 	}
 	return arg; /*removes warning*/
 }
-static void ms_tick(void) {
-    /* Updates change of value COV subscribers.
-     * Required for SERVICE_CONFIRMED_SUBSCRIBE_COV
-     * bacnet_handler_cov_task(); */
-}
 
-#define BN_UNC(service, handler) \
-    bacnet_apdu_set_unconfirmed_handler(		\
-		    SERVICE_UNCONFIRMED_##service,	\
-		    bacnet_handler_##handler)
-#define BN_CON(service, handler) \
-    bacnet_apdu_set_confirmed_handler(			\
-		    SERVICE_CONFIRMED_##service,	\
-		    bacnet_handler_##handler)
+/*----------------------------------------------*/
+/*----------Function Main-----------------------*/
+/*----------------------------------------------*/
 
 int main(int argc, char **argv) {
     uint8_t rx_buf[bacnet_MAX_MPDU];
     uint16_t pdu_len;
     BACNET_ADDRESS src;
-    pthread_t minute_tick_id, second_tick_id, modbus_contact;
+    pthread_t minute_tick_id, second_tick_id, modbus_contact_id;
 
     bacnet_Device_Set_Object_Instance_Number(BACNET_INSTANCE_NO);
     bacnet_address_init();
 
-    /* Setup device objects */
+    /* Setup device objects for bacnet domination*/
     bacnet_Device_Init(server_objects);
     BN_UNC(WHO_IS, who_is);
     BN_CON(READ_PROPERTY, read_property);
@@ -291,33 +286,18 @@ int main(int argc, char **argv) {
 
     bacnet_Send_I_Am(bacnet_Handler_Transmit_Buffer);
 
+    pthread_create(&modbus_contact_id, NULL, modbus_contact, NULL);
     pthread_create(&minute_tick_id, 0, minute_tick, NULL);
     pthread_create(&second_tick_id, 0, second_tick, NULL);
     
-    pthread_create(&modbus_contact, 0, modbus_contact, NULL);
-    /* Start another thread here to retrieve your allocated registers from the
-     * modbus server. This thread should have the following structure (in a
-     * separate function):
-     *
-     * Initialise:
-     *	    Connect to the modbus server
-     *
-     * Loop:
-     *	    Read the required number of registers from the modbus server
-     *	    Store the register data into the tail of a linked list 
-     */
-
     while (1) {
 	pdu_len = bacnet_datalink_receive(
 		    &src, rx_buf, bacnet_MAX_MPDU, BACNET_SELECT_TIMEOUT_MS);
 
 	if (pdu_len) {
-	    /* May call any registered handler.
-	     * Thread safety: May block, however we still need to guarantee
-	     * atomicity with the timers, so hold the lock anyway */
-	    pthread_mutex_lock(&timer_lock);
+	    pthread_mutex_lock(&tlock);
 	    bacnet_npdu_handler(&src, rx_buf, pdu_len);
-	    pthread_mutex_unlock(&timer_lock);
+	    pthread_mutex_unlock(&tlock);
 	}
 
 	ms_tick();
