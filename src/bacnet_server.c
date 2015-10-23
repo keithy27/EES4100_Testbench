@@ -1,5 +1,13 @@
 #include <stdio.h>
-
+#include <stdlib.h>
+#include <getopt.h>
+#include <pthread.h>
+#include <string.h>
+#include <modbus.h>
+#include <errno.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <libbacnet/address.h>
 #include <libbacnet/device.h>
 #include <libbacnet/handlers.h>
@@ -21,21 +29,51 @@
 #define BACNET_BBMD_ADDRESS	"140.159.160.7"
 #define BACNET_BBMD_TTL	90
 #endif
-#define NUM_LISTS 2
-//excessive libraries and #defines for now*/
-
+#define lists 2
 #define MTCP			    "140.159.153.159", 502
+/*excessive libraries and #defines for now*/
+/*---------------------------------------------------*/
+/*-----------------linked lists----------------------*/
+/*---------------------------------------------------*/
+typedef struct s_obj w_obj;
+struct s_obj {
+		char *word;
+		w_obj *next;
+};
 
-/* If you are trying out the test suite from home, this data matches the data
- * stored in RANDOM_DATA_POOL for device number 12
- * BACnet client will print "Successful match" whenever it is able to receive
- * this set of data. Note that you will not have access to the RANDOM_DATA_POOL
- * for your final submitted application. */
-static uint16_t test_data[] = {
-    0xA4EC, 0x6E39, 0x8740, 0x1065, 0x9134, 0xFC8C };
-#define NUM_TEST_DATA (sizeof(test_data)/sizeof(test_data[0]))
 
-static pthread_mutex_t timer_lock = PTHREAD_MUTEX_INITIALIZER;
+static w_obj *list_get_first(w_obj **l_head) { /* gets header sets it up for struct above ^^^ */
+		w_obj *f_obj;
+		f_obj = *l_head; /* gets list header */
+		*l_head = (*l_head)->next; /* moves list header to next */ 
+		return f_obj; /* returns header */
+}
+
+static w_obj *l_head[lists];
+static pthread_mutex_t l_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t l_rdy = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t t_lock = PTHREAD_MUTEX_INITIALIZER;
+
+static void add_to_list(w_obj **l_head, char *word) {
+		w_obj *l_obj, *t_obj;
+		char *t_string=strdup(word);
+		t_obj = malloc(sizeof(w_obj)); /* new temp object with memory allocated to the size of w obj */
+		t_obj->word = t_string; 
+		t_obj->next = NULL;
+		pthread_mutex_lock(&l_lock);
+		if (*l_head == NULL) { /* start if */
+			*l_head =t_obj; /* makes list header = temp object */
+		} else {
+			l_obj = *l_head; /* moves pointer to struct above ^^^ */
+			while (l_obj->next) { /*waits for change*/
+				l_obj = l_obj->next; 
+			}
+			l_obj->next = t_obj; /*moves pointer to temp object for now */
+			l_obj=l_obj->next;
+		}
+		pthread_mutex_unlock(&l_lock);
+		pthread_cond_signal(&l_rdy);
+}
 
 static int Update_Analog_Input_Read_Property(
 		BACNET_READ_PROPERTY_DATA *rpdata) {
